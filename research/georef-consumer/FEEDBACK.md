@@ -85,6 +85,23 @@ The consumer experiment found and covered a regression in affine inversion:
 the augmented matrix had the wrong shape, the identity block was initialized
 in the wrong half, and the inverse offset accumulator was not initialized.
 
+### Different source and target dimensions
+
+The current static `AffineTransform` and `transformContract` model one
+dimension for both source and target. That is sufficient for the current 2D
+image-to-reference experiment, but it cannot directly express a common
+consumer case such as:
+
+```text
+2D image pixel → 3D ground/world coordinate
+```
+
+This should not be solved by weakening the existing same-dimension affine
+contract. A later generic transform contract should carry separate source and
+target dimensions and should make inverse availability explicit. The current
+consumer can provide such a transform as an unconstrained custom type, but it
+loses the static framework introspection and pipeline validation benefits.
+
 ## Candidate future work for georef-d
 
 These are proposals, not requirements for the generic core:
