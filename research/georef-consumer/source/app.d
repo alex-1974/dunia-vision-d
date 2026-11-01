@@ -56,6 +56,44 @@ ReferenceCoordinate[] transformPolygon(
     return result;
 }
 
+CoordinateBounds!(DuniaReferenceFrame, double) activeMaskBounds(
+    SemanticMask mask,
+    float threshold,
+    AffineTransform!(DuniaImagePixels, DuniaReferenceFrame, double, 2) transform)
+{
+    assert(mask.isValid);
+    bool found;
+    double[2] minimum;
+    double[2] maximum;
+    foreach (index, confidence; mask.confidence)
+    {
+        if (confidence < threshold)
+            continue;
+        auto x = index % mask.width;
+        auto y = index / mask.width;
+        auto world = toReference(transform, cast(double) x + 0.5,
+            cast(double) y + 0.5);
+        if (!found)
+        {
+            minimum = world.values;
+            maximum = world.values;
+            found = true;
+        }
+        else
+        {
+            foreach (axis; 0 .. 2)
+            {
+                if (world.values[axis] < minimum[axis])
+                    minimum[axis] = world.values[axis];
+                if (world.values[axis] > maximum[axis])
+                    maximum[axis] = world.values[axis];
+            }
+        }
+    }
+    assert(found);
+    return CoordinateBounds!(DuniaReferenceFrame, double)(minimum, maximum);
+}
+
 void main()
 {
     auto candidate = SemanticCandidate(
@@ -89,6 +127,12 @@ void main()
     assert(referenceFootprint[0].values == [120.0, 460.0]);
     assert(referenceFootprint[2].values == [160.0, 400.0]);
     assert(referenceFootprint[$ - 1].values == referenceFootprint[0].values);
+
+    auto mask = SemanticMask(2, 2, [0.1f, 0.9f, 0.2f, 0.95f]);
+    auto activeBounds = activeMaskBounds(mask, 0.8f, pixelToReference);
+    // Active pixel centers are (1.5, 0.5) and (1.5, 1.5).
+    assert(activeBounds.minimum == [103.0, 497.0]);
+    assert(activeBounds.maximum == [103.0, 499.0]);
 
     AffineTransform!(DuniaReferenceFrame, DuniaImagePixels, double, 2) inverse;
     assert(pixelToReference.tryInverse(inverse));
