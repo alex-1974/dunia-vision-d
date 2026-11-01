@@ -1,0 +1,7 @@
+name "dunia-vision-georef-consumer"
+description "Consumer experiment for georef-d"
+targetType "executable"
+sourcePaths "source"
+dependency "dunia-vision-d" path="../.."
+dependency "georef-d" path="../../../../d-geospatial-workspace/libs/georef-d"
+
