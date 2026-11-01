@@ -45,6 +45,14 @@ double imageValue(size_t x, size_t y)
     // Bright rectangular feature on a darker background.
     if (x >= 4 && x < 8 && y >= 5 && y < 9)
         return 1.0;
+    // Paved road: strong contrast against the surrounding ground.
+    if (x >= 1 && x < 11 && y >= 2 && y < 4)
+        return 0.8;
+    // Unpaved road on grass: only a weak contrast against the green cover.
+    if (x >= 1 && x < 11 && y >= 7 && y < 9)
+        return 0.35;
+    if (y >= 6)
+        return 0.3;
     return 0.1;
 }
 
@@ -111,5 +119,17 @@ void main()
     assert(report.interiorMean > report.exteriorMean);
     assert(report.contrast > 0.5);
     assert(fabs(report.interiorMean - 1.0) < 0.000001);
+
+    auto pavedRoad = OSMFeature(2001, "highway=secondary surface=paved",
+        CoordinateBounds!(ReferenceSpace, double)([1.0, 2.0], [11.0, 4.0]));
+    auto unpavedGrassRoad = OSMFeature(2002,
+        "highway=track surface=unpaved",
+        CoordinateBounds!(ReferenceSpace, double)([1.0, 7.0], [11.0, 9.0]));
+    auto pavedReport = observe(pavedRoad, 12, 12, imageToReference);
+    auto unpavedReport = observe(unpavedGrassRoad, 12, 12, imageToReference);
+    assert(pavedReport.interiorSamples == 20);
+    assert(unpavedReport.interiorSamples == 20);
+    assert(pavedReport.contrast > unpavedReport.contrast);
+    assert(unpavedReport.contrast > 0.0);
 }
 
