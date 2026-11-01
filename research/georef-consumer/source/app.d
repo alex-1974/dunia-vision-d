@@ -30,6 +30,21 @@ ReferenceCoordinate toReference(
     return transform.forward(pixel(x, y));
 }
 
+CoordinateBounds!(DuniaReferenceFrame, double) transformBounds(
+    AffineTransform!(DuniaImagePixels, DuniaReferenceFrame, double, 2) transform,
+    ImageBounds bounds)
+{
+    auto a = toReference(transform, cast(double) bounds.minX,
+        cast(double) bounds.minY);
+    auto b = toReference(transform, cast(double) bounds.maxX,
+        cast(double) bounds.maxY);
+    return CoordinateBounds!(DuniaReferenceFrame, double)(
+        [a.values[0] < b.values[0] ? a.values[0] : b.values[0],
+         a.values[1] < b.values[1] ? a.values[1] : b.values[1]],
+        [a.values[0] > b.values[0] ? a.values[0] : b.values[0],
+         a.values[1] > b.values[1] ? a.values[1] : b.values[1]]);
+}
+
 void main()
 {
     auto candidate = SemanticCandidate(
@@ -49,6 +64,11 @@ void main()
 
     assert(topLeft.values == [120.0, 460.0]);
     assert(bottomRight.values == [160.0, 400.0]);
+
+    auto referenceBounds = transformBounds(pixelToReference,
+        candidate.object.bounds);
+    assert(referenceBounds.minimum == [120.0, 400.0]);
+    assert(referenceBounds.maximum == [160.0, 460.0]);
 
     AffineTransform!(DuniaReferenceFrame, DuniaImagePixels, double, 2) inverse;
     assert(pixelToReference.tryInverse(inverse));
