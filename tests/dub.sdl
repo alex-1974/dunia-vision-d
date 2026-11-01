@@ -1,0 +1,5 @@
+name "dunia-vision-d-tests"
+dependency "dunia-vision-d" path=".."
+targetType "executable"
+mainSourceFile "source/app.d"
+

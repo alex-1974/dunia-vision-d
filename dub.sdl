@@ -1,0 +1,9 @@
+name "dunia-vision-d"
+description "Semantic image interpretation building blocks for Dunia"
+homepage "https://github.com/alex-1974/dunia-vision-d"
+authors "Alexander Bernardi"
+license "MIT"
+targetType "library"
+sourcePaths "source"
+dependency "imagery-d" version="~>0.3.0"
+
