@@ -1,6 +1,7 @@
 import dunia.vision;
 import georef;
 import raster.region : Region2D;
+import std.math : floor;
 
 /// Consumer-owned spaces: georef assigns them no domain meaning.
 struct DuniaImagePixels
@@ -105,6 +106,37 @@ CoordinateBounds!(DuniaReferenceFrame, double) activeMaskBounds(
     return CoordinateBounds!(DuniaReferenceFrame, double)(minimum, maximum);
 }
 
+SemanticMask resampleNearest(
+    SemanticMask source,
+    size_t targetWidth,
+    size_t targetHeight,
+    double[2] targetOrigin,
+    double[2] targetPixelSize,
+    AffineTransform!(DuniaReferenceFrame, DuniaImagePixels, double, 2) referenceToPixel)
+{
+    assert(source.isValid);
+    float[] values = new float[](targetWidth * targetHeight);
+    foreach (row; 0 .. targetHeight)
+    {
+        foreach (column; 0 .. targetWidth)
+        {
+            auto reference = Coordinate!(DuniaReferenceFrame, double)([
+                targetOrigin[0] + (cast(double) column + 0.5) * targetPixelSize[0],
+                targetOrigin[1] + (cast(double) row + 0.5) * targetPixelSize[1]]);
+            auto pixelCoordinate = referenceToPixel.forward(reference);
+            auto sourceX = cast(long) floor(pixelCoordinate.values[0]);
+            auto sourceY = cast(long) floor(pixelCoordinate.values[1]);
+            if (sourceX < 0 || sourceY < 0
+                || sourceX >= cast(long) source.width
+                || sourceY >= cast(long) source.height)
+                continue;
+            values[row * targetWidth + column] = source.confidence[
+                cast(size_t) sourceY * source.width + cast(size_t) sourceX];
+        }
+    }
+    return SemanticMask(targetWidth, targetHeight, values);
+}
+
 void main()
 {
     auto candidate = SemanticCandidate(
@@ -147,6 +179,17 @@ void main()
     // Active pixel centers are (1.5, 0.5) and (1.5, 1.5).
     assert(activeBounds.minimum == [103.0, 497.0]);
     assert(activeBounds.maximum == [103.0, 499.0]);
+
+    AffineTransform!(DuniaReferenceFrame, DuniaImagePixels, double, 2) referenceToPixel;
+    assert(pixelToReference.tryInverse(referenceToPixel));
+    auto resampled = resampleNearest(mask, 4, 4, [100.0, 500.0], [1.0, -1.0],
+        referenceToPixel);
+    assert(resampled.isValid);
+    // Each source pixel covers a 2x2 block in the one-unit target grid.
+    assert(resampled.confidence == [0.1f, 0.1f, 0.9f, 0.9f,
+        0.1f, 0.1f, 0.9f, 0.9f,
+        0.2f, 0.2f, 0.95f, 0.95f,
+        0.2f, 0.2f, 0.95f, 0.95f]);
 
     AffineTransform!(DuniaReferenceFrame, DuniaImagePixels, double, 2) inverse;
     assert(pixelToReference.tryInverse(inverse));
