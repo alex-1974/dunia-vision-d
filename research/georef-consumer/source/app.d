@@ -1,5 +1,6 @@
 import dunia.vision;
 import georef;
+import raster.region : Region2D;
 
 /// Consumer-owned spaces: georef assigns them no domain meaning.
 struct DuniaImagePixels
@@ -56,6 +57,16 @@ ReferenceCoordinate[] transformPolygon(
     return result;
 }
 
+Region2D rasterRegion(ImageBounds bounds)
+{
+    // dunia-vision ImageBounds uses inclusive maxima; raster-d regions use
+    // an origin plus an extent, so the extent is inclusive width/height.
+    assert(bounds.maxX >= bounds.minX && bounds.maxY >= bounds.minY);
+    return Region2D(bounds.minX, bounds.minY,
+        bounds.maxX - bounds.minX + 1,
+        bounds.maxY - bounds.minY + 1);
+}
+
 CoordinateBounds!(DuniaReferenceFrame, double) activeMaskBounds(
     SemanticMask mask,
     float threshold,
@@ -99,6 +110,9 @@ void main()
     auto candidate = SemanticCandidate(
         CandidateKind.building,
         ObjectCandidate(ImageBounds(10, 20, 30, 50), 0.9f, 400));
+    auto sourceRegion = rasterRegion(candidate.object.bounds);
+    assert(sourceRegion.x == 10 && sourceRegion.y == 20);
+    assert(sourceRegion.width == 21 && sourceRegion.height == 31);
 
     auto pixelToReference = AffineTransform!(
         DuniaImagePixels, DuniaReferenceFrame, double, 2)(

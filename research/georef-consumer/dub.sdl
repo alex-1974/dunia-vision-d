@@ -4,4 +4,5 @@ targetType "executable"
 sourcePaths "source"
 dependency "dunia-vision-d" path="../.."
 dependency "georef-d" path="../../../../d-geospatial-workspace/libs/georef-d"
+dependency "raster-d" path="../../../../d-geospatial-workspace/libs/raster-d"
 
