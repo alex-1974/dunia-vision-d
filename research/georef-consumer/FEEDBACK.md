@@ -61,6 +61,24 @@ Pixel-center semantics are nevertheless important and must remain expressible
 by a consumer. The experiment uses `(column + 0.5, row + 0.5)` for pixel
 centers.
 
+The experiment also performs a small nearest-neighbor remap into a different
+target grid by using the inverse georef transform. This confirms that the
+current transform API is sufficient for a simple remapping loop, while the
+remapping policy itself remains domain-specific.
+
+The following concerns must remain outside the georef core:
+
+- nearest-neighbor versus bilinear or area-weighted sampling;
+- source and target grid definitions;
+- NoData and cloud/quality masks;
+- confidence aggregation and thresholding;
+- categorical versus continuous values;
+- edge and coverage policy.
+
+The current `SemanticMask` has no separate NoData channel. A production
+integration should not overload confidence values with NoData semantics without
+an explicit contract.
+
 ### Affine inverse
 
 The consumer experiment found and covered a regression in affine inversion:
