@@ -1,0 +1,7 @@
+name "dunia-vision-osm-observation"
+description "Controlled OSM-to-image observation experiment"
+targetType "executable"
+sourcePaths "source"
+dependency "dunia-vision-d" path="../.."
+dependency "georef-d" path="../../../../d-geospatial-workspace/libs/georef-d"
+
