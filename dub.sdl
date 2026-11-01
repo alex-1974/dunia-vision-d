@@ -6,4 +6,5 @@ license "MIT"
 targetType "library"
 sourcePaths "source"
 dependency "imagery-d" version="~>0.3.0"
+dependency "georef-d" path="../../d-geospatial-workspace/libs/georef-d"
 
